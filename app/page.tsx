@@ -1,101 +1,127 @@
-import Image from "next/image";
+"use client";
+import React, { useState, useEffect, useCallback } from "react";
+import type { Thread, Category } from "@/types/types";
+import ThreadList from "@/components/ThreadList";
+import ThreadForm from "@/components/ThreadForm";
+import { supabase } from "@/lib/supabase";
+
+async function getCategory(){
+  const { data: categories, error } = await supabase.from("categories").select("*");
+  if (error) {
+    throw error;
+  }
+  return categories;
+}
+
+async function getThread({page, categoryId}: {page: number, categoryId: string | null}){
+  const limit = 10;
+  let query = supabase
+    .from("threads")
+    .select("*, categories(name)", { count: "exact" })
+    .order("updated_at", { ascending: false });
+
+  if (categoryId) {
+    query = query.eq("category_id", categoryId);
+  }
+
+  const from = (page - 1) * limit;
+  const to = from + limit - 1;
+
+  const { data: threads, error, count } = await query.range(from, to);
+
+  if (error) throw error;
+
+  const totalPages = Math.ceil((count || 0) / limit);
+
+  return {
+    threads,
+    currentPage: page,
+    totalPages,
+    totalThreads: count,
+  };
+}
 
 export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="https://nextjs.org/icons/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              app/page.tsx
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
+  const [threads, setThreads] = useState<Thread[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="https://nextjs.org/icons/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
-        </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+  const fetchThreads = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
+
+    try{
+      const data = await getThread({page, categoryId: selectedCategory});
+      setThreads(data.threads as unknown as Thread[]);
+      setTotalPages(data.totalPages);
+    } catch (error) {
+      console.error("Error fetching threads:", error);
+      setError("スレッドの取得に失敗しました。");
+    }
+    setIsLoading(false);
+  }, [page, selectedCategory]);
+
+  const fetchCategories = useCallback(async () => {
+    try{
+      const data = await getCategory();
+      setCategories(data as unknown as Category[]);
+    }catch (error) {
+      console.error("Error fetching categories:", error);
+      setError("カテゴリの取得に失敗しました。");
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchCategories();
+  }, [fetchCategories]);
+
+  useEffect(() => {
+    fetchThreads();
+  }, [fetchThreads]);
+
+  const handlePageChange = (newPage: number) => {
+    setPage(newPage);
+  };
+
+  const handleCategoryChange = (categoryId: string | null) => {
+    setSelectedCategory(categoryId);
+    setPage(1); // カテゴリが変更されたら、ページを1に戻す
+  };
+
+  const handleThreadCreated = async (newThread: Thread) => {
+    setThreads((prevThreads) => [newThread, ...prevThreads]);
+    // 新しいスレッドが作成されたら、最新のスレッドリストを再取得
+    await fetchThreads();
+  };
+
+  const handleError = (errorMessage: string) => {
+    setError(errorMessage);
+  };
+
+  if (isLoading && threads.length === 0) return <p>読み込み中...</p>;
+
+  return (
+    <div className="space-y-6">
+      <h2 className="text-2xl font-bold text-gray-900">スレッド一覧</h2>
+      {error && <p className="text-red-500">{error}</p>}
+      <ThreadList
+        threads={threads}
+        categories={categories}
+        page={page}
+        totalPages={totalPages}
+        onPageChange={handlePageChange}
+        onCategoryChange={handleCategoryChange}
+        selectedCategory={selectedCategory}
+      />
+      <ThreadForm
+        categories={categories}
+        onThreadCreated={handleThreadCreated}
+        onError={handleError}
+      />
     </div>
   );
 }
