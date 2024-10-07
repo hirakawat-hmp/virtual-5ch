@@ -12,13 +12,22 @@
   --color-muted: #6b7280;
 }
 
-.dark {
+/* .dark {
   --color-background: #1a1a1a;
   --color-foreground: #ffffff;
   --color-primary: #60a5fa;
   --color-secondary: #34d399;
   --color-accent: #fbbf24;
   --color-muted: #9ca3af;
+} */
+
+.dark {
+  --color-background: #121212;
+  --color-foreground: #e0e0e0;
+  --color-primary: #4dabf7;
+  --color-secondary: #40c057;
+  --color-accent: #fcc419;
+  --color-muted: #868e96;
 }
 
 body {

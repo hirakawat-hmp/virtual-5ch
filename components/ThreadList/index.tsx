@@ -60,7 +60,15 @@ export default function ThreadList({
                 {thread.title}
               </h3>
               <p className="text-sm text-muted mt-2">
-                最終更新: {new Date(thread.updated_at).toLocaleString()}
+                最終更新: {new Date(thread.updated_at).toLocaleString("ja-JP", {
+                    year: "numeric",
+                    month: "2-digit",
+                    day: "2-digit",
+                    hour: "2-digit",
+                    minute: "2-digit",
+                    second: "2-digit",
+                })}
+                {/* 最終更新: {new Date(thread.updated_at).toLocaleString()} */}
               </p>
             </Link>
           </li>

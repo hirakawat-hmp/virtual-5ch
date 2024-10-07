@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import type { Post } from "@/types/types";
 import { supabase } from "@/lib/supabase";
 import { format } from "date-fns";
-import { toZonedTime } from "date-fns-tz";
+// import { toZonedTime } from "date-fns-tz";
 
 interface PostFormProps {
   threadId: string;
@@ -31,8 +31,7 @@ async function post(
     }
 
     const now = new Date();
-    const tokyoTime = toZonedTime(now, "Asia/Tokyo");
-    const formattedTime = format(tokyoTime, "yyyy-MM-dd'T'HH:mm:ss.SSSxxx");
+    const formattedTime = format(now, "yyyy-MM-dd'T'HH:mm:ss.SSSxxx");
 
     const generatedTrip = userTrip ? await generateTrip(userTrip) : undefined;
 

@@ -18,7 +18,7 @@ export default function PostList({
   return (
     <div className="space-y-6">
       {posts.map((post) => (
-        <div key={post.id} className="bg-background p-4 rounded-lg shadow-md">
+        <div key={post.id} className="bg-background p-4 rounded-lg shadow-md dark:border dark:border-gray-500">
           <div className="flex justify-between items-start mb-2">
             <div>
               {post.user_name ? (
@@ -26,7 +26,7 @@ export default function PostList({
                   {post.user_name}
                 </span>
               ) : (
-                <span className="text-muted">匿名</span>
+                <span className="text-muted">名無しさんこんにちは</span>
               )}
               {post.user_trip && (
                 <span className="ml-2 text-sm text-secondary">
@@ -35,7 +35,7 @@ export default function PostList({
               )}
             </div>
             <span className="text-sm text-muted">
-              {new Date(post.created_at).toLocaleString("ja-JP", {
+            {new Date(post.created_at).toLocaleString("ja-JP", {
                 year: "numeric",
                 month: "2-digit",
                 day: "2-digit",

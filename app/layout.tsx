@@ -12,7 +12,7 @@ export default function RootLayout({
     <html lang="ja" suppressHydrationWarning>
       <body className="bg-background text-foreground transition-colors duration-300">
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-          <Header />
+          <Header fixed={false} />
           <main className="container mx-auto mt-8 px-4">{children}</main>
           <Footer />
         </ThemeProvider>
